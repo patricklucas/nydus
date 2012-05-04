@@ -377,12 +377,22 @@ class DistributedContextManager(object):
     def __init__(self, cluster, workers=None):
         self._workers = workers
         self._cluster = cluster
+        self._handler = None
 
     def __enter__(self):
-        self._handler = DistributedConnection(self._cluster, self._workers)
-        return self._handler
+        return self.handler
 
     def __exit__(self, exc_type, exc_value, tb):
+        self.execute()
+
+    @property
+    def handler(self):
+        if not self._handler:
+            self._handler = DistributedConnection(self._cluster, self._workers)
+
+        return self._handler
+
+    def execute(self):
         # we need to break up each command and route it
         self._handler._execute()
 
